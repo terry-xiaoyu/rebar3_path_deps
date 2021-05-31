@@ -46,13 +46,14 @@ download_(Dir, {app, Path}, _State) ->
   ok = filelib:ensure_dir(Dir),
   {ok, Cwd} = file:get_cwd(),
   Source = filename:join([Cwd, Path]),
-  rebar_log:log(info, "checking app deps at: ~p, dir=~p ~n", [Path, Dir]),
+  rebar_log:log(error, "checking app deps at: ~p, dir=~p ~n", [Path, Dir]),
   filelib:is_file(Source).
 
 make_vsn(_Dir) ->
   {error, "Replacing version of type app not supported."}.
 
-needs_update(_AppInfo, _) ->
+needs_update(_AppInfo, _State) ->
+  rebar_log:log(error, "need update=~p ~n", [_AppInfo]),
   true.
 
 last_modified(Source) ->
@@ -101,34 +102,3 @@ is_excluded(Path) ->
                      (RE, false) ->
                       (re:run(Path, RE, [unicode]) =/= nomatch) orelse (filelib:is_regular (Path) /= true)
                   end, false, KnownExcludes).
-
-copy(File, Source, Target) ->
-    SourceFile = filename:join([Source | File]),
-    TargetFile = filename:join([Target | File]),
-    ok = filelib:ensure_dir(TargetFile),
-    {ok, _} = file:copy(SourceFile, TargetFile).
-
-%%
-%% applies a function to each file for its side-effects
-foreach(Fun, Ignore, Path) ->
-    foreach(Fun, Path, Ignore, []).
-
-foreach(Fun, Root, Ignore, Path) ->
-    File = filename:join([Root | Path]),
-    case filelib:is_dir(File) of
-        true  ->
-            case file:list_dir(File) of
-                {ok, List} ->
-                    lists:foreach(
-                        fun(X) ->
-                            foreach(Fun, Root, Ignore, X)
-                        end,
-                        [Path ++ [X] || X <- List, not lists:member(X, Ignore)]
-                    );
-                {error, _Reason} ->
-                   ok
-            end;
-        false -> 
-            Fun(Path)
-    end.
-
