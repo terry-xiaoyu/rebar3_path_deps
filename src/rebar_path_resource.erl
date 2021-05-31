@@ -18,57 +18,42 @@ lock(Dir, Source) when is_tuple(Source) ->
 lock(AppInfo, _) ->
   lock_(rebar_app_info:dir(AppInfo), rebar_app_info:source(AppInfo)).
 
-lock_(Dir, {path, Path, _}) ->
-  lock_(Dir, {path, Path});
+lock_(Dir, {app, Path, _}) ->
+  lock_(Dir, {app, Path});
 
-lock_(_Dir, {path, Path}) ->
+lock_(_Dir, {app, Path}) ->
   {ok, Cwd} = file:get_cwd(),
   Source = filename:join([Cwd, Path]),
-  {path, Path, {mtime, to_iso8601(last_modified(Source))}}.
+  {app, Path, {mtime, to_iso8601(last_modified(Source))}}.
 
-download(TmpDir, {path, Path, _}, State) ->
-  download(TmpDir, {path, Path}, State);
-download(TmpDir, {path, Path}, State) ->
-  case download_(TmpDir, {path, Path}, State) of
+download(TmpDir, {app, Path, _}, State) ->
+  download(TmpDir, {app, Path}, State);
+download(TmpDir, {app, Path}, State) ->
+  case download_(TmpDir, {app, Path}, State) of
     ok -> {ok, State};
     Error -> Error
   end.
 
 download(TmpDir, AppInfo, State, _) ->
   case rebar_app_info:source(AppInfo) of
-    {path, Path} ->
-      download_(TmpDir, {path, Path}, State);
-    {path, Path, _} ->
-      download_(TmpDir, {path, Path}, State)
+    {app, Path} ->
+      download_(TmpDir, {app, Path}, State);
+    {app, Path, _} ->
+      download_(TmpDir, {app, Path}, State)
   end.
 
-download_(Dir, {path, Path}, _State) ->
+download_(Dir, {app, Path}, _State) ->
   ok = filelib:ensure_dir(Dir),
   {ok, Cwd} = file:get_cwd(),
   Source = filename:join([Cwd, Path]),
-  foreach(fun(X) -> copy(X, Source, Dir) end, [".git", "_build", "examples"], Source),
-  rebar_log:log(debug, "copied source from=~p, to=~p ~n", [Path, Dir]),
-  LastModified = last_modified(Source),
-  {ok, A} = file:read_file_info(Dir),
-  file:write_file_info(Path, A#file_info{mtime = LastModified, atime = LastModified}).
-
+  rebar_log:log(info, "checking app deps at: ~p, dir=~p ~n", [Path, Dir]),
+  filelib:is_file(Source).
 
 make_vsn(_Dir) ->
-  {error, "Replacing version of type path not supported."}.
+  {error, "Replacing version of type app not supported."}.
 
-needs_update(Dir, {path, Path, _}) ->
-  needs_update_(Dir, {path, Path});
-needs_update(AppInfo, _) ->
-  needs_update_(rebar_app_info:dir(AppInfo), rebar_app_info:source(AppInfo)).
-
-needs_update_(Dir, {path, Path}) ->
-  {ok, Cwd} = file:get_cwd(),
-  Source = filename:join([Cwd, Path]),
-  LastModified = last_modified(Source),
-  Old = filelib:last_modified(Dir),
-  rebar_log:log(debug, "compare dir=~p, path=~p last modified=~p, old=~p~n", [Dir, Path, LastModified, Old]),
-  (Old < LastModified).
-
+needs_update(_AppInfo, _) ->
+  true.
 
 last_modified(Source) ->
   Files = filter_files(dir_files(Source)),
