@@ -2,7 +2,7 @@
 
 -export([init/2,
          lock/2,
-         download/4, download/3,
+         download/4,
          needs_update/2,
          make_vsn/1]).
 
