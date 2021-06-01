@@ -46,7 +46,7 @@ download_(Dir, {app, Path}, _State) ->
   ok = filelib:ensure_dir(Dir),
   {ok, Cwd} = file:get_cwd(),
   Source = filename:join([Cwd, Path]),
-  rebar_log:log(info, "verifying app deps at: ~p ~n", [Source]),
+  rebar_log:log(info, "verifying app deps at: ~p, dir: ~p ~n", [Dir, Source]),
   case filelib:is_file(Source) of
     true -> ok;
     false ->
