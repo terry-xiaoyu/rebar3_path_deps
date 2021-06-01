@@ -26,31 +26,16 @@ lock_(_Dir, {app, Path}) ->
   Source = filename:join([Cwd, Path]),
   {app, Path, {mtime, to_iso8601(last_modified(Source))}}.
 
-download(TmpDir, {app, Path, _}, State) ->
-  download(TmpDir, {app, Path}, State);
-download(TmpDir, {app, Path}, State) ->
-  case download_(TmpDir, {app, Path}, State) of
-    ok -> {ok, State};
-    Error -> Error
-  end.
-
-download(TmpDir, AppInfo, State, _) ->
-  case rebar_app_info:source(AppInfo) of
-    {app, Path} ->
-      download_(TmpDir, {app, Path}, State);
-    {app, Path, _} ->
-      download_(TmpDir, {app, Path}, State)
-  end.
-
-download_(Dir, {app, Path}, _State) ->
-  ok = filelib:ensure_dir(Dir),
+download(TmpDir, AppInfo, _State, _) ->
+  {app, Path} = rebar_app_info:source(AppInfo),
+  ok = filelib:ensure_dir(TmpDir),
   {ok, Cwd} = file:get_cwd(),
   Source = filename:join([Cwd, Path]),
-  rebar_log:log(info, "verifying app deps at: ~p, dir: ~p ~n", [Dir, Source]),
+  rebar_log:log(info, "verifying app deps at: ~p, tmpdir: ~p, dir: ~p ~n",
+    [TmpDir, Source, rebar_app_info:dir(AppInfo)]),
   case filelib:is_file(Source) of
     true -> ok;
-    false ->
-      {error, {not_found, Source}}
+    false -> {error, {not_found, Source}}
   end.
 
 make_vsn(_Dir) ->
