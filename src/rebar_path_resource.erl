@@ -32,10 +32,10 @@ download(TmpDir, AppInfo, _State, _) ->
   {ok, Cwd} = file:get_cwd(),
   Source = filename:join([Cwd, Path]),
   OutDir = rebar_app_info:out_dir(AppInfo),
-  rebar_log:log(info, "verifying app deps at: ~p, tmpdir: ~p, outdir: ~p ~n",
+  rebar_log:log(info, "verifying app deps at: ~p, srcdir: ~p, outdir: ~p ~n",
     [TmpDir, Source, OutDir]),
   case filelib:is_file(Source) of
-    true -> rebar_file_utils:cp_r(filelib:wildcard(filename:join([Source, "*"])), OutDir);
+    true -> rebar_file_utils:cp_r(filelib:wildcard(filename:join([Source, "*"])), TmpDir);
     false -> {error, {not_found, Source}}
   end.
 
