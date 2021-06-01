@@ -46,8 +46,12 @@ download_(Dir, {app, Path}, _State) ->
   ok = filelib:ensure_dir(Dir),
   {ok, Cwd} = file:get_cwd(),
   Source = filename:join([Cwd, Path]),
-  rebar_log:log(error, "checking app deps at: ~p, dir=~p ~n", [Path, Dir]),
-  filelib:is_file(Source).
+  rebar_log:log(info, "verifying app deps at: ~p ~n", [Source]),
+  case filelib:is_file(Source) of
+    true -> ok;
+    false ->
+      {error, {not_found, Source}}
+  end.
 
 make_vsn(_Dir) ->
   {error, "Replacing version of type app not supported."}.
